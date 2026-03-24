@@ -98,7 +98,7 @@ cd web
 npm install
 npm run build
 cd ..
-python -m aurynk
+python -m aurynk  
 ```
 
 Notes:
