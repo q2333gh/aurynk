@@ -1,21 +1,15 @@
 import logging
 import logging.handlers
-import os
 import sys
 from pathlib import Path
 
-# Determine log directory
-# Use XDG_STATE_HOME if available (standard for logs/history), otherwise ~/.local/state/aurynk
-_xdg_state = os.environ.get("XDG_STATE_HOME")
-if _xdg_state:
-    LOG_DIR = os.path.join(_xdg_state, "aurynk")
-else:
-    LOG_DIR = os.path.join(os.path.expanduser("~"), ".local", "state", "aurynk")
+from aurynk.utils.paths import get_state_dir
 
 # Ensure directory exists
 try:
+    LOG_DIR = str(get_state_dir())
     Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
-    LOG_FILE = os.path.join(LOG_DIR, "aurynk.log")
+    LOG_FILE = str(Path(LOG_DIR) / "aurynk.log")
 except Exception:
     # Fallback to temp dir if we can't create the state dir
     import tempfile

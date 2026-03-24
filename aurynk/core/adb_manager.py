@@ -8,25 +8,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from zeroconf import IPVersion, ServiceBrowser, ServiceStateChange, Zeroconf
+try:
+    from zeroconf import IPVersion, ServiceBrowser, ServiceStateChange, Zeroconf
+except ImportError:  # pragma: no cover - exercised indirectly in minimal environments
+    IPVersion = ServiceBrowser = ServiceStateChange = Zeroconf = None
 
 from aurynk.core.device_manager import DeviceStore
 from aurynk.i18n import _
 from aurynk.utils.adb_utils import get_adb_path
 from aurynk.utils.logger import get_logger
+from aurynk.utils.paths import get_data_dir
 from aurynk.utils.settings import SettingsManager
 
 logger = get_logger("ADBController")
 
-# Use XDG_DATA_HOME when available (works inside Flatpak); fall back to
-# ~/.local/share/aurynk for regular installs. Ensure the directory exists.
-_xdg_data = os.environ.get("XDG_DATA_HOME")
-if _xdg_data:
-    DEVICE_STORE_DIR = os.path.join(_xdg_data, "aurynk")
-else:
-    DEVICE_STORE_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "aurynk")
-
-# Ensure the directory exists (safe no-op on non-Flatpak too)
+DEVICE_STORE_DIR = str(get_data_dir())
 Path(DEVICE_STORE_DIR).mkdir(parents=True, exist_ok=True)
 
 DEVICE_STORE_PATH = os.path.join(DEVICE_STORE_DIR, "paired_devices.json")
@@ -161,6 +157,9 @@ class ADBController:
         Returns:
             tuple: A tuple containing the Zeroconf instance and a tuple of ServiceBrowsers.
         """
+        if Zeroconf is None:
+            raise RuntimeError("zeroconf is not installed")
+
         zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
 
         # We'll collect discovered services by address

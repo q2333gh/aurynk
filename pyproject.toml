@@ -1,18 +1,19 @@
 [project]
 name = "aurynk"
 version = "1.3.0"
-description = "Android Device Manager for Linux with wireless pairing and device management"
+description = "Android device manager for Linux and Windows with wireless pairing and mirroring"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "GPL-3.0-or-later"}
 authors = [
     {name = "IshuSinghSE", email = "ishu.111636@yahoo.com"}
 ]
-keywords = ["android", "adb", "device-manager", "gtk", "libadwaita", "wireless"]
+keywords = ["android", "adb", "device-manager", "desktop", "wireless", "scrcpy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -22,13 +23,16 @@ classifiers = [
 ]
 dependencies = [
     "pillow>=12.0.0",
-    "pygobject>=3.54.5",
-    "pyudev>=0.24.0",
+    "pywebview>=5.4",
     "qrcode>=8.2",
     "zeroconf>=0.148.0",
 ]
 
 [project.optional-dependencies]
+linux = [
+    "pygobject>=3.54.5",
+    "pyudev>=0.24.0",
+]
 dev = [
     "rich>=14.2.0",
     "ruff>=0.14.3",
@@ -40,7 +44,7 @@ Repository = "https://github.com/IshuSinghSE/aurynk.git"
 Issues = "https://github.com/IshuSinghSE/aurynk/issues"
 
 [project.scripts]
-aurynk = "aurynk.application:main"
+aurynk = "aurynk.launcher:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

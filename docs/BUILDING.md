@@ -1,6 +1,6 @@
 # Building Aurynk
 
-This guide covers how to build Aurynk from source using different methods.
+This guide covers how to build Aurynk from source for Linux and Windows.
 
 ## Table of Contents
 
@@ -56,10 +56,13 @@ sudo pacman -S --needed \
 
 See [pyproject.toml](pyproject.toml) for the complete list. Key dependencies:
 - `pillow>=12.0.0`
-- `pygobject>=3.54.5`
-- `pyudev>=0.24.0`
+- `pywebview>=5.4`
 - `qrcode>=8.2`
 - `zeroconf>=0.148.0`
+
+Linux-only optional dependencies:
+- `pygobject>=3.54.5`
+- `pyudev>=0.24.0`
 
 Development dependencies:
 - `rich>=14.2.0`
@@ -84,6 +87,24 @@ pip install -e ".[dev]"
 # Run from source
 python -m aurynk
 ```
+
+### Windows Quick Start
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+cd web
+npm install
+npm run build
+cd ..
+python -m aurynk
+```
+
+Notes:
+- The default desktop shell uses `pywebview`.
+- If `pywebview` is not available, Aurynk opens the desktop UI in the system browser against the same local API.
+- On Linux, install `pip install -e ".[dev,linux]"` if you also want the legacy GTK and `pyudev` integrations.
 
 ## Build Methods
 

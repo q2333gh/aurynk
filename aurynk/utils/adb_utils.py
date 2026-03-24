@@ -1,18 +1,65 @@
-def get_adb_path():
-    """Return the custom ADB path from settings, or fallback to 'adb'."""
+import os
+import shutil
+
+
+def _is_executable(path: str) -> bool:
+    return bool(path) and os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def _candidate_paths() -> list[str]:
+    candidates: list[str] = []
+    if os.name == "nt":
+        local_app_data = os.environ.get("LOCALAPPDATA", "")
+        user_profile = os.environ.get("USERPROFILE", "")
+        android_home = os.environ.get("ANDROID_HOME", "")
+        android_sdk_root = os.environ.get("ANDROID_SDK_ROOT", "")
+        candidates.extend(
+            [
+                os.path.join(local_app_data, "Android", "Sdk", "platform-tools", "adb.exe"),
+                os.path.join(user_profile, "AppData", "Local", "Android", "Sdk", "platform-tools", "adb.exe"),
+                os.path.join(android_home, "platform-tools", "adb.exe"),
+                os.path.join(android_sdk_root, "platform-tools", "adb.exe"),
+            ]
+        )
+    return [path for path in candidates if path]
+
+
+def resolve_adb_path(raise_on_missing: bool = False) -> str:
+    """Resolve ADB from settings, PATH, or common SDK locations."""
+    configured_path = ""
     try:
         from aurynk.utils.settings import SettingsManager
 
         settings = SettingsManager()
-        adb_path = settings.get("adb", "adb_path", "").strip()
-        if adb_path:
-            import os
-
-            if os.path.isfile(adb_path) and os.access(adb_path, os.X_OK):
-                return adb_path
+        configured_path = settings.get("adb", "adb_path", "").strip()
+        if _is_executable(configured_path):
+            return configured_path
     except Exception:
-        pass
-    return "adb"
+        configured_path = ""
+
+    resolved = shutil.which("adb")
+    if resolved:
+        return resolved
+
+    for candidate in _candidate_paths():
+        if _is_executable(candidate):
+            return candidate
+
+    if raise_on_missing:
+        if configured_path:
+            raise FileNotFoundError(
+                f"Configured adb_path does not exist or is not executable: {configured_path}"
+            )
+        raise FileNotFoundError(
+            "ADB executable not found. Install Android platform-tools or set adb.adb_path in Settings."
+        )
+
+    return configured_path or "adb"
+
+
+def get_adb_path():
+    """Return the best-known ADB path or the fallback command name."""
+    return resolve_adb_path(raise_on_missing=False)
 
 
 def is_device_connected(address, connect_port):

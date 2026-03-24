@@ -6,7 +6,7 @@
 [![Translation status](https://hosted.weblate.org/widgets/aurynk/-/svg-badge.svg)](https://hosted.weblate.org/engage/aurynk/)
 </div>
 
-# 🚀 Aurynk - Your Android Device Manager for Linux
+# Aurynk - Your Android Device Manager for Linux and Windows
 
 <p align="center">
   <a href="https://ishusinghse.github.io/aurynk/">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>Wirelessly connect, manage and control your Android devices from Linux</strong>
+  <strong>Wirelessly connect, manage and control your Android devices from Linux and Windows</strong>
 </p>
 
 <p align="center">
@@ -29,7 +29,7 @@
 
 ## 🎯 What is Aurynk?
 
-Aurynk (Aura + Sync, pronounced “aw-rink”) makes managing your Android devices from Linux **simple and wireless**. No more cables, no more complicated setup - just scan a QR code and you're connected!
+Aurynk (Aura + Sync, pronounced “aw-rink”) makes managing your Android devices from Linux and Windows **simple and wireless**. No more cables, no more complicated setup - pair, connect, mirror, and manage from one desktop shell.
 
 ## 🎨 Screenshots
 
@@ -70,7 +70,7 @@ Perfect for:
 | 📱 **Device Management**  | View detailed specs, battery, storage info         |
 | 📸 **Screenshot Capture** | Instantly capture and save device screenshots      |
 | 🖥️ **Screen Mirroring**   | View and control your device screen (via scrcpy)   |
-| 🎨 **Modern Interface**   | Beautiful GTK4 design that fits your Linux desktop |
+| 🎨 **Modern Interface**   | Cross-platform desktop shell backed by a local WebView UI |
 | � **Multiple Devices**    | Manage several Android devices simultaneously      |
 
 ## 📦 Installation
@@ -243,3 +243,4 @@ Aurynk is free and open source software licensed under GPL-3.0-or-later.
   <strong>⭐ Star us on GitHub if you find Aurynk useful!</strong><br>
   <a href="https://github.com/IshuSinghSE/aurynk">🔗 GitHub Repository</a>
 </p>
+

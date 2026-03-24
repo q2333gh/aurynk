@@ -1,9 +1,8 @@
 import json
-import os
-from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from aurynk.utils.logger import get_logger
+from aurynk.utils.paths import get_config_dir
 
 logger = get_logger(__name__)
 
@@ -29,6 +28,7 @@ class SettingsManager:
             "tray_icon_style": "default",
         },
         "adb": {
+            "adb_path": "",
             "connection_timeout": 10,
             "max_retry_attempts": 5,
             "auto_disconnect_on_sleep": False,
@@ -84,7 +84,7 @@ class SettingsManager:
 
         self._settings: Dict[str, Dict[str, Any]] = {}
         self._callbacks: Dict[str, Dict[str, list[Callable]]] = {}
-        self._config_dir = self._get_config_dir()
+        self._config_dir = get_config_dir()
         self._config_file = self._config_dir / "settings.json"
 
         # Ensure config directory exists
@@ -95,16 +95,6 @@ class SettingsManager:
 
         self._initialized = True
         logger.info(f"Settings manager initialized with config at {self._config_file}")
-
-    def _get_config_dir(self) -> Path:
-        """Get the configuration directory path, respecting XDG_CONFIG_HOME."""
-        xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
-        if xdg_config_home:
-            config_base = Path(xdg_config_home)
-        else:
-            config_base = Path.home() / ".config"
-
-        return config_base / "aurynk"
 
     def load(self) -> None:
         """Load settings from the configuration file."""
