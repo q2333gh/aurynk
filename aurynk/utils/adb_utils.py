@@ -1,9 +1,48 @@
 import os
 import shutil
+import sys
+from pathlib import Path
 
 
 def _is_executable(path: str) -> bool:
     return bool(path) and os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def _tool_name(executable_name: str) -> str:
+    if os.name == "nt" and not executable_name.lower().endswith(".exe"):
+        return f"{executable_name}.exe"
+    return executable_name
+
+
+def _iter_search_paths(base: Path, executable_name: str, nested_dirs: list[str]) -> list[str]:
+    tool = _tool_name(executable_name)
+    candidates = [str(base / tool)]
+    candidates.extend(str(base / nested_dir / tool) for nested_dir in nested_dirs)
+    return candidates
+
+
+def _portable_roots() -> list[Path]:
+    roots: list[Path] = []
+
+    env_root = os.environ.get("AURYNK_PORTABLE_ROOT", "").strip()
+    if env_root:
+        roots.append(Path(env_root).expanduser())
+
+    if getattr(sys, "frozen", False):
+        roots.append(Path(sys.executable).resolve().parent)
+
+    roots.append(Path(__file__).resolve().parents[2])
+    roots.append(Path.cwd().resolve())
+
+    unique_roots: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        normalized = str(root)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        unique_roots.append(root)
+    return unique_roots
 
 
 def _candidate_paths() -> list[str]:
@@ -24,16 +63,48 @@ def _candidate_paths() -> list[str]:
     return [path for path in candidates if path]
 
 
+def _resolve_configured_path(
+    configured_path: str, executable_name: str, nested_dirs: list[str]
+) -> str:
+    configured_path = configured_path.strip()
+    if not configured_path:
+        return ""
+
+    candidate = Path(configured_path).expanduser()
+    if candidate.is_file() and _is_executable(str(candidate)):
+        return str(candidate)
+
+    if candidate.is_dir():
+        for path in _iter_search_paths(candidate, executable_name, nested_dirs):
+            if _is_executable(path):
+                return path
+
+    return ""
+
+
+def _resolve_portable_path(executable_name: str, nested_dirs: list[str]) -> str:
+    for root in _portable_roots():
+        for path in _iter_search_paths(root, executable_name, nested_dirs):
+            if _is_executable(path):
+                return path
+    return ""
+
+
 def resolve_adb_path(raise_on_missing: bool = False) -> str:
-    """Resolve ADB from settings, PATH, or common SDK locations."""
+    """Resolve ADB from settings, PATH, common SDK locations, or a portable bundle."""
     configured_path = ""
     try:
         from aurynk.utils.settings import SettingsManager
 
         settings = SettingsManager()
         configured_path = settings.get("adb", "adb_path", "").strip()
-        if _is_executable(configured_path):
-            return configured_path
+        resolved_configured = _resolve_configured_path(
+            configured_path,
+            "adb",
+            ["platform-tools", "tools", os.path.join("tools", "adb"), "bin"],
+        )
+        if resolved_configured:
+            return resolved_configured
     except Exception:
         configured_path = ""
 
@@ -45,16 +116,66 @@ def resolve_adb_path(raise_on_missing: bool = False) -> str:
         if _is_executable(candidate):
             return candidate
 
+    portable = _resolve_portable_path(
+        "adb",
+        ["platform-tools", "tools", os.path.join("tools", "adb"), "bin"],
+    )
+    if portable:
+        return portable
+
     if raise_on_missing:
         if configured_path:
             raise FileNotFoundError(
-                f"Configured adb_path does not exist or is not executable: {configured_path}"
+                "Configured adb_path does not exist, is not executable, "
+                f"or does not contain adb: {configured_path}"
             )
         raise FileNotFoundError(
             "ADB executable not found. Install Android platform-tools or set adb.adb_path in Settings."
         )
 
     return configured_path or "adb"
+
+
+def resolve_scrcpy_path(raise_on_missing: bool = False) -> str:
+    """Resolve scrcpy from settings, PATH, or a portable bundle."""
+    configured_path = ""
+    try:
+        from aurynk.utils.settings import SettingsManager
+
+        settings = SettingsManager()
+        configured_path = settings.get("scrcpy", "scrcpy_path", "").strip()
+        resolved_configured = _resolve_configured_path(
+            configured_path,
+            "scrcpy",
+            ["tools", os.path.join("tools", "scrcpy"), "scrcpy", "bin"],
+        )
+        if resolved_configured:
+            return resolved_configured
+    except Exception:
+        configured_path = ""
+
+    resolved = shutil.which("scrcpy")
+    if resolved:
+        return resolved
+
+    portable = _resolve_portable_path(
+        "scrcpy",
+        ["tools", os.path.join("tools", "scrcpy"), "scrcpy", "bin"],
+    )
+    if portable:
+        return portable
+
+    if raise_on_missing:
+        if configured_path:
+            raise FileNotFoundError(
+                "Configured scrcpy_path does not exist, is not executable, "
+                f"or does not contain scrcpy: {configured_path}"
+            )
+        raise FileNotFoundError(
+            "scrcpy executable not found. Install scrcpy or set scrcpy.scrcpy_path in Settings."
+        )
+
+    return configured_path or "scrcpy"
 
 
 def get_adb_path():

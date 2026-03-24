@@ -392,7 +392,7 @@ function App() {
                   <input
                     value={settings.adb?.adb_path ?? ""}
                     onChange={(event) => updateSetting("adb", "adb_path", event.target.value)}
-                    placeholder="C:\\Android\\platform-tools\\adb.exe"
+                    placeholder="C:\\Android\\platform-tools\\adb.exe or C:\\Android\\platform-tools"
                   />
                 </label>
                 <label className="field-row">
@@ -419,6 +419,14 @@ function App() {
 
               <div className="settings-group">
                 <h3>scrcpy</h3>
+                <label className="field-row">
+                  <span>scrcpy path</span>
+                  <input
+                    value={settings.scrcpy?.scrcpy_path ?? ""}
+                    onChange={(event) => updateSetting("scrcpy", "scrcpy_path", event.target.value)}
+                    placeholder="C:\\Tools\\scrcpy\\scrcpy.exe or C:\\Tools\\scrcpy"
+                  />
+                </label>
                 <label className="toggle-row">
                   <span>Always on top</span>
                   <input

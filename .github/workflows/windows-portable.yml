@@ -1,0 +1,54 @@
+name: Windows Portable
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "master", "develop"]
+    paths:
+      - ".github/workflows/windows-portable.yml"
+      - "aurynk/**"
+      - "web/**"
+      - "scripts/build-portable-windows.ps1"
+      - "aurynk-portable.spec"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-portable:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build Windows portable package
+        shell: pwsh
+        run: .\scripts\build-portable-windows.ps1
+
+      - name: Upload portable directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: AurynkPortable-windows-x64-dir
+          path: dist/AurynkPortable
+          if-no-files-found: error
+
+      - name: Upload portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: AurynkPortable-windows-x64-zip
+          path: dist/AurynkPortable-windows-x64.zip
+          if-no-files-found: error

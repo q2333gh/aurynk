@@ -1,12 +1,12 @@
 """scrcpy interaction and management for Aurynk."""
 
 import os
-import shutil
 import subprocess
 import threading
 import time
 
 from aurynk.i18n import _
+from aurynk.utils.adb_utils import resolve_adb_path, resolve_scrcpy_path
 from aurynk.utils.logger import get_logger
 from aurynk.utils.settings import SettingsManager
 
@@ -107,7 +107,7 @@ class ScrcpyManager:
             # attempting to launch scrcpy. This avoids launching a snap
             # scrcpy that will immediately fail with "Could not find any ADB device".
             try:
-                adb_path = settings.get("adb", "adb_path", "adb")
+                adb_path = resolve_adb_path(raise_on_missing=False)
                 res = subprocess.run(
                     [adb_path, "devices"], capture_output=True, text=True, timeout=3
                 )
@@ -125,15 +125,7 @@ class ScrcpyManager:
                 logger.debug("ADB presence check failed or timed out; proceeding to start scrcpy")
 
             # Build scrcpy command from settings
-            scrcpy_path = settings.get("scrcpy", "scrcpy_path", "").strip()
-            # Resolve which scrcpy binary we'll execute. If user configured
-            # a path, prefer it; otherwise resolve from PATH. Detect snap
-            # launcher variants that lack raw USB access and warn early.
-            resolved = None
-            if scrcpy_path:
-                resolved = scrcpy_path
-            else:
-                resolved = shutil.which("scrcpy") or "scrcpy"
+            resolved = resolve_scrcpy_path(raise_on_missing=False)
 
             # Detect snap launcher that will not have raw-usb access.
             if isinstance(resolved, str) and (
@@ -146,10 +138,7 @@ class ScrcpyManager:
                     resolved,
                 )
 
-            if scrcpy_path:
-                cmd = [scrcpy_path, "--serial", serial, "--window-title", window_title]
-            else:
-                cmd = [resolved, "--serial", serial, "--window-title", window_title]
+            cmd = [resolved, "--serial", serial, "--window-title", window_title]
 
             # --- Monitor geometry logic ---
             window_geom = settings.get("scrcpy", "window_geometry", "")
@@ -275,7 +264,7 @@ class ScrcpyManager:
             # Use adb to set show_touches before starting scrcpy, with serial and delay
             show_touches = settings.get("scrcpy", "show_touches")
             try:
-                adb_path = settings.get("adb", "adb_path") or "adb"
+                adb_path = resolve_adb_path(raise_on_missing=False)
                 value = "1" if show_touches else "0"
                 # Use the correct device serial
                 subprocess.run(
@@ -551,12 +540,7 @@ class ScrcpyManager:
 
             # Build scrcpy command from settings. Resolve executable path
             # and detect snap-packaged launchers which may lack raw USB access.
-            scrcpy_path = settings.get("scrcpy", "scrcpy_path", "").strip()
-            resolved = None
-            if scrcpy_path:
-                resolved = scrcpy_path
-            else:
-                resolved = shutil.which("scrcpy") or "scrcpy"
+            resolved = resolve_scrcpy_path(raise_on_missing=False)
 
             if isinstance(resolved, str) and (
                 "/snap/" in resolved or resolved.endswith("scrcpy-launch")
@@ -568,10 +552,7 @@ class ScrcpyManager:
                     resolved,
                 )
 
-            if scrcpy_path:
-                cmd = [scrcpy_path, "--serial", serial, "--window-title", window_title]
-            else:
-                cmd = [resolved, "--serial", serial, "--window-title", window_title]
+            cmd = [resolved, "--serial", serial, "--window-title", window_title]
 
             # Apply all the same settings as wireless devices
             # (reusing the same settings logic from start_mirror)
@@ -690,7 +671,7 @@ class ScrcpyManager:
             # Input settings
             show_touches = settings.get("scrcpy", "show_touches")
             try:
-                adb_path = settings.get("adb", "adb_path", "adb")
+                adb_path = resolve_adb_path(raise_on_missing=False)
                 value = "1" if show_touches else "0"
                 subprocess.run(
                     [
