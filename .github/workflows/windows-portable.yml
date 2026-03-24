@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["main", "master", "develop"]
+    tags: ["v*"]
     paths:
       - ".github/workflows/windows-portable.yml"
       - "aurynk/**"
@@ -11,9 +12,11 @@ on:
       - "scripts/build-portable-windows.ps1"
       - "aurynk-portable.spec"
       - "pyproject.toml"
+  release:
+    types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-portable:
@@ -52,3 +55,11 @@ jobs:
           name: AurynkPortable-windows-x64-zip
           path: dist/AurynkPortable-windows-x64.zip
           if-no-files-found: error
+
+      - name: Upload zip to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AurynkPortable-windows-x64.zip
+          fail_on_unmatched_files: true
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
