@@ -1,6 +1,8 @@
 import logging
 import logging.handlers
+import os
 import sys
+import threading
 from pathlib import Path
 
 from aurynk.utils.paths import get_state_dir
@@ -18,36 +20,68 @@ except Exception:
     LOG_FILE = os.path.join(LOG_DIR, "aurynk.log")
 
 
+_HANDLER_LOCK = threading.Lock()
+_FORMATTER: logging.Formatter | None = None
+_CONSOLE_HANDLER: logging.Handler | None = None
+_FILE_HANDLER: logging.Handler | None = None
+
+
+def _get_formatter() -> logging.Formatter:
+    global _FORMATTER
+    if _FORMATTER is None:
+        _FORMATTER = logging.Formatter(
+            "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    return _FORMATTER
+
+
+def _get_console_handler() -> logging.Handler:
+    global _CONSOLE_HANDLER
+    if _CONSOLE_HANDLER is None:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(_get_formatter())
+        _CONSOLE_HANDLER = handler
+    return _CONSOLE_HANDLER
+
+
+def _get_file_handler() -> logging.Handler | None:
+    global _FILE_HANDLER
+    if _FILE_HANDLER is None:
+        try:
+            handler = logging.handlers.RotatingFileHandler(
+                LOG_FILE,
+                maxBytes=1024 * 1024,
+                backupCount=3,
+                encoding="utf-8",
+                delay=True,
+            )
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(_get_formatter())
+            _FILE_HANDLER = handler
+        except Exception as exc:
+            print(f"Failed to setup file logging: {exc}", file=sys.stderr)
+            _FILE_HANDLER = None
+    return _FILE_HANDLER
+
+
 def get_logger(name):
     """Get a configured logger instance."""
     logger = logging.getLogger(name)
 
     # Only configure if handlers haven't been added yet
     if not logger.handlers:
-        logger.setLevel(logging.DEBUG)
+        with _HANDLER_LOCK:
+            logger.setLevel(logging.DEBUG)
+            logger.propagate = False
 
-        # Formatter
-        formatter = logging.Formatter(
-            "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-        )
+            console_handler = _get_console_handler()
+            if console_handler not in logger.handlers:
+                logger.addHandler(console_handler)
 
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-        # File handler (Rotating)
-        try:
-            # 1MB max size, keep 3 backups
-            file_handler = logging.handlers.RotatingFileHandler(
-                LOG_FILE, maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
-            )
-            file_handler.setLevel(logging.DEBUG)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-        except Exception as e:
-            # Fallback if we can't write to file
-            print(f"Failed to setup file logging: {e}", file=sys.stderr)
+            file_handler = _get_file_handler()
+            if file_handler and file_handler not in logger.handlers:
+                logger.addHandler(file_handler)
 
     return logger
