@@ -1,4 +1,3 @@
-import subprocess
 from copy import deepcopy
 from typing import Any
 
@@ -6,9 +5,10 @@ from aurynk.core.adb_manager import ADBController
 from aurynk.core.scrcpy_runner import ScrcpyManager
 from aurynk.platform.system_integration import SystemIntegration
 from aurynk.services.qr_pairing_service import QrPairingService
-from aurynk.utils.adb_utils import get_adb_path, resolve_adb_path
+from aurynk.utils.adb_utils import resolve_adb_path
 from aurynk.utils.logger import get_logger
 from aurynk.utils.settings import SettingsManager
+from aurynk.utils.subprocess_utils import run_subprocess
 
 logger = get_logger("AppService")
 
@@ -98,7 +98,7 @@ class AppService:
         if not connect_port:
             raise ValueError("Device is missing connect_port")
 
-        result = subprocess.run(
+        result = run_subprocess(
             [adb_path, "connect", f"{address}:{connect_port}"],
             capture_output=True,
             text=True,
@@ -117,7 +117,7 @@ class AppService:
         if not connect_port:
             raise ValueError("Device is missing connect_port")
 
-        result = subprocess.run(
+        result = run_subprocess(
             [adb_path, "disconnect", f"{address}:{connect_port}"],
             capture_output=True,
             text=True,
@@ -227,7 +227,7 @@ class AppService:
     def _get_adb_device_state(self) -> dict[str, str]:
         try:
             adb_path = resolve_adb_path(raise_on_missing=True)
-            result = subprocess.run(
+            result = run_subprocess(
                 [adb_path, "devices"],
                 capture_output=True,
                 text=True,

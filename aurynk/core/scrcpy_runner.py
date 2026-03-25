@@ -9,6 +9,7 @@ from aurynk.i18n import _
 from aurynk.utils.adb_utils import resolve_adb_path, resolve_scrcpy_path
 from aurynk.utils.logger import get_logger
 from aurynk.utils.settings import SettingsManager
+from aurynk.utils.subprocess_utils import popen_subprocess, run_subprocess
 
 # For monitor geometry
 try:
@@ -108,7 +109,7 @@ class ScrcpyManager:
             # scrcpy that will immediately fail with "Could not find any ADB device".
             try:
                 adb_path = resolve_adb_path(raise_on_missing=False)
-                res = subprocess.run(
+                res = run_subprocess(
                     [adb_path, "devices"], capture_output=True, text=True, timeout=3
                 )
                 adb_list = []
@@ -267,7 +268,7 @@ class ScrcpyManager:
                 adb_path = resolve_adb_path(raise_on_missing=False)
                 value = "1" if show_touches else "0"
                 # Use the correct device serial
-                subprocess.run(
+                run_subprocess(
                     [
                         adb_path,
                         "-s",
@@ -302,7 +303,7 @@ class ScrcpyManager:
 
             logger.info(f"Starting scrcpy with command: {' '.join(cmd)}")
 
-            proc = subprocess.Popen(cmd, env=env)
+            proc = popen_subprocess(cmd, env=env)
             self.processes[serial] = proc
 
             # Send notification to device that mirroring started
@@ -673,7 +674,7 @@ class ScrcpyManager:
             try:
                 adb_path = resolve_adb_path(raise_on_missing=False)
                 value = "1" if show_touches else "0"
-                subprocess.run(
+                run_subprocess(
                     [
                         adb_path,
                         "-s",
@@ -706,7 +707,7 @@ class ScrcpyManager:
 
             logger.info(f"Starting USB scrcpy with command: {' '.join(cmd)}")
 
-            proc = subprocess.Popen(cmd, env=env)
+            proc = popen_subprocess(cmd, env=env)
             self.processes[serial] = proc
 
             # Send notification to device that mirroring started

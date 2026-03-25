@@ -3,6 +3,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from aurynk.utils.subprocess_utils import run_subprocess
+
 
 def _is_executable(path: str) -> bool:
     return bool(path) and os.path.isfile(path) and os.access(path, os.X_OK)
@@ -185,13 +187,11 @@ def get_adb_path():
 
 def is_device_connected(address, connect_port):
     """Check if a device is connected via adb."""
-    import subprocess
-
     serial = f"{address}:{connect_port}"
     from aurynk.utils.adb_utils import get_adb_path
 
     try:
-        result = subprocess.run([get_adb_path(), "devices"], capture_output=True, text=True)
+        result = run_subprocess([get_adb_path(), "devices"], capture_output=True, text=True)
         if result.returncode != 0:
             return False
         for line in result.stdout.splitlines():
@@ -212,12 +212,10 @@ def clear_device_notifications(serial: str) -> bool:
     Returns:
         True if cleared successfully, False otherwise
     """
-    import subprocess
-
     try:
         # Cancel notification with our specific tag
         cancel_cmd = "cmd notification cancel aurynk_status"
-        subprocess.run(
+        run_subprocess(
             [get_adb_path(), "-s", serial, "shell", cancel_cmd], capture_output=True, timeout=2
         )
         return True
@@ -236,8 +234,6 @@ def send_device_notification(serial: str, message: str, title: str = "Aurynk") -
     Returns:
         True if notification was sent successfully, False otherwise
     """
-    import subprocess
-
     try:
         # Clear old notifications first
         clear_device_notifications(serial)
@@ -252,10 +248,10 @@ def send_device_notification(serial: str, message: str, title: str = "Aurynk") -
 
         cmd = [get_adb_path(), "-s", serial, "shell", notification_cmd]
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
+        result = run_subprocess(cmd, capture_output=True, text=True, timeout=3)
 
         # Also log to logcat for debugging
-        subprocess.run(
+        run_subprocess(
             [get_adb_path(), "-s", serial, "shell", "log", "-t", "Aurynk", message], timeout=2
         )
 

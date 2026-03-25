@@ -19,14 +19,16 @@ class TestAppService(unittest.TestCase):
         )
 
     @patch("aurynk.services.app_service.resolve_adb_path", return_value="adb")
-    @patch("aurynk.services.app_service.subprocess.run")
-    def test_get_devices_merges_wireless_and_usb_state(self, mock_run, _mock_resolve_adb_path):
+    @patch("aurynk.services.app_service.run_subprocess")
+    def test_get_devices_merges_wireless_and_usb_state(
+        self, mock_run_subprocess, _mock_resolve_adb_path
+    ):
         self.adb_controller.load_paired_devices.return_value = [
             {"address": "192.168.1.8", "connect_port": 5555, "name": "Pixel"}
         ]
         self.scrcpy.is_mirroring.return_value = True
         self.scrcpy.is_mirroring_serial.return_value = False
-        mock_run.return_value = MagicMock(
+        mock_run_subprocess.return_value = MagicMock(
             returncode=0,
             stdout="List of devices attached\n192.168.1.8:5555\tdevice\nUSB123\tdevice\n",
             stderr="",
@@ -42,12 +44,12 @@ class TestAppService(unittest.TestCase):
         self.assertEqual(usb["adb_serial"], "USB123")
 
     @patch("aurynk.services.app_service.resolve_adb_path", return_value="adb")
-    @patch("aurynk.services.app_service.subprocess.run")
-    def test_connect_device(self, mock_run, _mock_resolve_adb_path):
+    @patch("aurynk.services.app_service.run_subprocess")
+    def test_connect_device(self, mock_run_subprocess, _mock_resolve_adb_path):
         self.adb_controller.load_paired_devices.return_value = [
             {"address": "192.168.1.8", "connect_port": 5555, "name": "Pixel"}
         ]
-        mock_run.return_value = MagicMock(returncode=0, stdout="connected", stderr="")
+        mock_run_subprocess.return_value = MagicMock(returncode=0, stdout="connected", stderr="")
 
         result = self.service.connect_device("192.168.1.8")
 
