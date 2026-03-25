@@ -52,6 +52,8 @@ function App() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [showSettings, setShowSettings] = useState(true);
+  const [showSetupSettings, setShowSetupSettings] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   const groupedDevices = useMemo(() => {
     return {
@@ -386,47 +388,7 @@ function App() {
               </div>
 
               <div className="settings-group">
-                <h3>ADB</h3>
-                <label className="field-row">
-                  <span>ADB path</span>
-                  <input
-                    value={settings.adb?.adb_path ?? ""}
-                    onChange={(event) => updateSetting("adb", "adb_path", event.target.value)}
-                    placeholder="C:\\Android\\platform-tools\\adb.exe or C:\\Android\\platform-tools"
-                  />
-                </label>
-                <label className="field-row">
-                  <span>Connection timeout</span>
-                  <input
-                    type="number"
-                    value={settings.adb?.connection_timeout ?? 10}
-                    onChange={(event) =>
-                      updateSetting("adb", "connection_timeout", Number(event.target.value))
-                    }
-                  />
-                </label>
-                <label className="field-row">
-                  <span>Retry attempts</span>
-                  <input
-                    type="number"
-                    value={settings.adb?.max_retry_attempts ?? 5}
-                    onChange={(event) =>
-                      updateSetting("adb", "max_retry_attempts", Number(event.target.value))
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="settings-group">
                 <h3>scrcpy</h3>
-                <label className="field-row">
-                  <span>scrcpy path</span>
-                  <input
-                    value={settings.scrcpy?.scrcpy_path ?? ""}
-                    onChange={(event) => updateSetting("scrcpy", "scrcpy_path", event.target.value)}
-                    placeholder="C:\\Tools\\scrcpy\\scrcpy.exe or C:\\Tools\\scrcpy"
-                  />
-                </label>
                 <label className="toggle-row">
                   <span>Always on top</span>
                   <input
@@ -467,6 +429,72 @@ function App() {
                     }
                   />
                 </label>
+              </div>
+
+              <div className="settings-fold">
+                <button
+                  className="fold-toggle"
+                  type="button"
+                  onClick={() => setShowSetupSettings((value) => !value)}
+                >
+                  <span>Initial setup</span>
+                  <span>{showSetupSettings ? "Hide" : "Show"}</span>
+                </button>
+                {showSetupSettings ? (
+                  <div className="settings-group settings-group-subtle">
+                    <label className="field-row">
+                      <span>ADB path</span>
+                      <input
+                        value={settings.adb?.adb_path ?? ""}
+                        onChange={(event) => updateSetting("adb", "adb_path", event.target.value)}
+                        placeholder="C:\\Android\\platform-tools\\adb.exe or C:\\Android\\platform-tools"
+                      />
+                    </label>
+                    <label className="field-row">
+                      <span>scrcpy path</span>
+                      <input
+                        value={settings.scrcpy?.scrcpy_path ?? ""}
+                        onChange={(event) => updateSetting("scrcpy", "scrcpy_path", event.target.value)}
+                        placeholder="C:\\Tools\\scrcpy\\scrcpy.exe or C:\\Tools\\scrcpy"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="settings-fold">
+                <button
+                  className="fold-toggle"
+                  type="button"
+                  onClick={() => setShowAdvancedSettings((value) => !value)}
+                >
+                  <span>Advanced tuning</span>
+                  <span>{showAdvancedSettings ? "Hide" : "Show"}</span>
+                </button>
+                {showAdvancedSettings ? (
+                  <div className="settings-group settings-group-subtle">
+                    <label className="field-row">
+                      <span>Connection timeout</span>
+                      <input
+                        type="number"
+                        value={settings.adb?.connection_timeout ?? 10}
+                        onChange={(event) =>
+                          updateSetting("adb", "connection_timeout", Number(event.target.value))
+                        }
+                      />
+                    </label>
+                    <label className="field-row">
+                      <span>Retry attempts</span>
+                      <input
+                        type="number"
+                        value={settings.adb?.max_retry_attempts ?? 5}
+                        onChange={(event) =>
+                          updateSetting("adb", "max_retry_attempts", Number(event.target.value))
+                        }
+                      />
+                    </label>
+                  </div>
+                ) : null}
               </div>
 
               <button
