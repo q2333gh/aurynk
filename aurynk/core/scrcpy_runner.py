@@ -9,7 +9,7 @@ from aurynk.i18n import _
 from aurynk.utils.adb_utils import resolve_adb_path, resolve_scrcpy_path
 from aurynk.utils.logger import get_logger
 from aurynk.utils.settings import SettingsManager
-from aurynk.utils.subprocess_utils import popen_subprocess, run_subprocess
+from aurynk.utils.subprocess_utils import run_subprocess
 
 # For monitor geometry
 try:
@@ -303,7 +303,7 @@ class ScrcpyManager:
 
             logger.info(f"Starting scrcpy with command: {' '.join(cmd)}")
 
-            proc = popen_subprocess(cmd, env=env)
+            proc = subprocess.Popen(cmd, env=env)
             self.processes[serial] = proc
 
             # Send notification to device that mirroring started
@@ -707,7 +707,7 @@ class ScrcpyManager:
 
             logger.info(f"Starting USB scrcpy with command: {' '.join(cmd)}")
 
-            proc = popen_subprocess(cmd, env=env)
+            proc = subprocess.Popen(cmd, env=env)
             self.processes[serial] = proc
 
             # Send notification to device that mirroring started
