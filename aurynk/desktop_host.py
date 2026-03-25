@@ -54,7 +54,7 @@ class DesktopHost:
         try:
             import webview
 
-            window = webview.create_window(title, url, width=1360, height=920, min_size=(200, 200))
+            window = webview.create_window(title, url, width=700, height=1244, min_size=(200, 200))
             webview.start()
             return 0
         except ImportError:
