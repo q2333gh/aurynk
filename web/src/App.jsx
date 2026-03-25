@@ -249,6 +249,10 @@ function App() {
 
       <header className="topbar">
         <div className="topbar-actions">
+          <button className="primary-button" type="button" onClick={togglePairingPanel}>
+            <Plus size={16} />
+            {pairingPanelOpen ? "Hide" : "Add Device"}
+          </button>
           <button className="ghost-button" onClick={loadDevices}>
             <RefreshCw size={16} />
             Refresh
@@ -280,10 +284,6 @@ function App() {
                 <span className="hero-stat-label">USB</span>
               </div>
             </div>
-            <button className="primary-button hero-cta wide" type="button" onClick={togglePairingPanel}>
-              <Plus size={16} />
-              {pairingPanelOpen ? "Hide" : "Add Device"}
-            </button>
           </div>
 
           {!hasDevices ? (
