@@ -77,8 +77,6 @@ function App() {
   );
 
   const hasDevices = devices.length > 0;
-  const hasAnyConnectedDevice = devices.some((device) => device.connected);
-
   useEffect(() => {
     loadDevices();
     loadSettings();
@@ -91,12 +89,6 @@ function App() {
     const timer = window.setInterval(loadQrPairingStatus, 2000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (!hasDevices) {
-      setPairingPanelOpen(true);
-    }
-  }, [hasDevices]);
 
   async function loadDevices() {
     try {
@@ -277,21 +269,23 @@ function App() {
       <main className="layout layout-single">
         <section className="primary-column">
           <div className="hero-strip">
-            <div className="hero-stat">
-              <span className="hero-stat-value">{devices.length}</span>
-              <span className="hero-stat-label">All</span>
+            <div className="hero-metrics">
+              <div className="hero-stat">
+                <span className="hero-stat-value">{devices.length}</span>
+                <span className="hero-stat-label">All</span>
+              </div>
+              <div className="hero-stat">
+                <span className="hero-stat-value">{groupedDevices.wireless.length}</span>
+                <span className="hero-stat-label">Wi-Fi</span>
+              </div>
+              <div className="hero-stat">
+                <span className="hero-stat-value">{groupedDevices.usb.length}</span>
+                <span className="hero-stat-label">USB</span>
+              </div>
             </div>
-            <div className="hero-stat">
-              <span className="hero-stat-value">{groupedDevices.wireless.length}</span>
-              <span className="hero-stat-label">Wi-Fi</span>
-            </div>
-            <div className="hero-stat">
-              <span className="hero-stat-value">{groupedDevices.usb.length}</span>
-              <span className="hero-stat-label">USB</span>
-            </div>
-            <button className="primary-button hero-cta" type="button" onClick={togglePairingPanel}>
+            <button className="primary-button hero-cta wide" type="button" onClick={togglePairingPanel}>
               <Plus size={16} />
-              {pairingPanelOpen ? "Hide Pairing" : hasDevices ? "Add Device" : "Pair Device"}
+              {pairingPanelOpen ? "Hide" : "Add Device"}
             </button>
           </div>
 
@@ -302,7 +296,7 @@ function App() {
                 {!pairingPanelOpen ? (
                   <button className="primary-button" type="button" onClick={togglePairingPanel}>
                     <Plus size={16} />
-                    Pair Device
+                    Add Device
                   </button>
                 ) : null}
               </div>
