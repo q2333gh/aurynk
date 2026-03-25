@@ -2,8 +2,8 @@ name: Deploy Website
 
 on:
   push:
-    branches: [ "main" ] # Only deploy website from production code
-    paths: [ "web/**" ]  # Only run if website files change
+    branches: [ "main" ]
+    paths: [ "web/**" ]
   workflow_dispatch:
 
 permissions:
@@ -21,10 +21,13 @@ jobs:
           npm install
           npm run build
 
-      - name: Deploy to GitHub Pages (Root)
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: web/dist
-          branch: gh-pages
-          clean: true
-          clean-exclude: nightly  # ⚠️ CRITICAL: Protects your Flatpak repo!
+      # gh-pages deployment is intentionally disabled.
+      # The repository now treats main as the only active development line,
+      # and desktop/release distribution no longer depends on GitHub Pages.
+      # - name: Deploy to GitHub Pages (Root)
+      #   uses: JamesIves/github-pages-deploy-action@v4
+      #   with:
+      #     folder: web/dist
+      #     branch: gh-pages
+      #     clean: true
+      #     clean-exclude: nightly
