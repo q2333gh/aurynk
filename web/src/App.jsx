@@ -1,4 +1,15 @@
-import { Monitor, RefreshCw, Settings, Smartphone, Usb, Camera, Link2, Link2Off } from "lucide-react";
+import {
+  Camera,
+  Link2,
+  Link2Off,
+  Monitor,
+  Plus,
+  RefreshCw,
+  Settings,
+  Smartphone,
+  Usb,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 const defaultSettings = {
@@ -51,16 +62,41 @@ function App() {
   const [busyKey, setBusyKey] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [showSettings, setShowSettings] = useState(true);
+  const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
+  const [pairingPanelOpen, setPairingPanelOpen] = useState(false);
+  const [manualPairingOpen, setManualPairingOpen] = useState(false);
   const [showSetupSettings, setShowSetupSettings] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
-  const groupedDevices = useMemo(() => {
-    return {
+  const groupedDevices = useMemo(
+    () => ({
       wireless: devices.filter((device) => device.type === "wireless"),
       usb: devices.filter((device) => device.type === "usb"),
-    };
-  }, [devices]);
+    }),
+    [devices],
+  );
+
+  const hasDevices = devices.length > 0;
+  const hasAnyConnectedDevice = devices.some((device) => device.connected);
+
+  useEffect(() => {
+    loadDevices();
+    loadSettings();
+    const timer = window.setInterval(loadDevices, 3000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    loadQrPairingStatus();
+    const timer = window.setInterval(loadQrPairingStatus, 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!hasDevices) {
+      setPairingPanelOpen(true);
+    }
+  }, [hasDevices]);
 
   async function loadDevices() {
     try {
@@ -80,19 +116,6 @@ function App() {
       setError(err.message);
     }
   }
-
-  useEffect(() => {
-    loadDevices();
-    loadSettings();
-    const timer = window.setInterval(loadDevices, 3000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    loadQrPairingStatus();
-    const timer = window.setInterval(loadQrPairingStatus, 2000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   async function handlePair(event) {
     event.preventDefault();
@@ -115,6 +138,10 @@ function App() {
         connect_port: "",
         password: "",
       });
+      setManualPairingOpen(false);
+      if (hasDevices) {
+        setPairingPanelOpen(false);
+      }
       await loadDevices();
     } catch (err) {
       setError(err.message);
@@ -139,6 +166,7 @@ function App() {
     try {
       const payload = await api("/api/pair/qr/start", { method: "POST", body: "{}" });
       setQrPairing(payload);
+      setPairingPanelOpen(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,6 +225,7 @@ function App() {
       });
       setSettings(payload.settings || settings);
       setNotice("Settings saved.");
+      setSettingsDrawerOpen(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -214,24 +243,36 @@ function App() {
     }));
   }
 
+  function togglePairingPanel() {
+    setPairingPanelOpen((value) => !value);
+    if (!pairingPanelOpen) {
+      setManualPairingOpen(false);
+    }
+  }
+
   return (
     <div className="app-shell">
       <div className="ambient ambient-a" />
       <div className="ambient ambient-b" />
 
       <header className="topbar">
-        <div>
+        <div className="topbar-copy">
           <p className="eyebrow">Aurynk Desktop</p>
-          <h1>Android device control for Linux and Windows</h1>
+          <h1>Devices first. Everything else on demand.</h1>
+          <p className="topbar-hint">
+            {hasAnyConnectedDevice
+              ? "Mirror, screenshot, or reconnect from one compact view."
+              : "Pair once, then keep the main surface focused on your devices."}
+          </p>
         </div>
         <div className="topbar-actions">
           <button className="ghost-button" onClick={loadDevices}>
             <RefreshCw size={16} />
             Refresh
           </button>
-          <button className="ghost-button" onClick={() => setShowSettings((value) => !value)}>
+          <button className="ghost-button" onClick={() => setSettingsDrawerOpen(true)}>
             <Settings size={16} />
-            {showSettings ? "Hide Settings" : "Show Settings"}
+            Settings
           </button>
         </div>
       </header>
@@ -239,102 +280,163 @@ function App() {
       {error ? <div className="banner banner-error">{error}</div> : null}
       {notice ? <div className="banner banner-ok">{notice}</div> : null}
 
-      <main className="layout">
+      <main className="layout layout-single">
         <section className="primary-column">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <p className="panel-kicker">Pair Device</p>
-                <h2>Manual wireless pairing</h2>
+          <div className="hero-strip">
+            <div className="hero-stat">
+              <span className="hero-stat-value">{devices.length}</span>
+              <span className="hero-stat-label">Devices</span>
+            </div>
+            <div className="hero-stat">
+              <span className="hero-stat-value">{groupedDevices.wireless.length}</span>
+              <span className="hero-stat-label">Wireless</span>
+            </div>
+            <div className="hero-stat">
+              <span className="hero-stat-value">{groupedDevices.usb.length}</span>
+              <span className="hero-stat-label">USB</span>
+            </div>
+            <button className="primary-button hero-cta" type="button" onClick={togglePairingPanel}>
+              <Plus size={16} />
+              {pairingPanelOpen ? "Hide Pairing" : hasDevices ? "Add Device" : "Pair Device"}
+            </button>
+          </div>
+
+          {!hasDevices ? (
+            <div className="panel onboarding-panel">
+              <div className="empty-state compact-empty-state">
+                <p className="panel-kicker">Get Started</p>
+                <h2>No devices yet</h2>
+                <p className="empty-copy">
+                  Pair through QR once. Manual coordinates are there only if you need them.
+                </p>
+                {!pairingPanelOpen ? (
+                  <button className="primary-button" type="button" onClick={togglePairingPanel}>
+                    <Plus size={16} />
+                    Pair Device
+                  </button>
+                ) : null}
               </div>
             </div>
-            <div className="qr-pairing">
-              <div className="qr-copy">
-                <p className="panel-kicker">QR Pairing</p>
-                <h3>Scan on Android Wireless Debugging</h3>
-                <p className="qr-description">
-                  On your phone, open Developer Options, enter Wireless Debugging, then tap
-                  "Pair device with QR code".
-                </p>
-                <div className="qr-actions">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    disabled={busyKey === "qr-start"}
-                    onClick={startQrPairing}
-                  >
-                    {busyKey === "qr-start" ? "Generating..." : "Generate QR"}
+          ) : null}
+
+          {pairingPanelOpen ? (
+            <div className="panel pairing-panel">
+              <div className="panel-header compact-panel-header">
+                <div>
+                  <p className="panel-kicker">Pair Device</p>
+                  <h2>Wireless pairing</h2>
+                </div>
+                {hasDevices ? (
+                  <button className="icon-button" type="button" onClick={() => setPairingPanelOpen(false)}>
+                    <X size={16} />
                   </button>
-                  {qrPairing.active ? (
+                ) : null}
+              </div>
+
+              <div className="pairing-card">
+                <div className="pairing-copy">
+                  <h3>QR pairing</h3>
+                  <p className="pairing-hint">Open Wireless Debugging on Android and scan the code.</p>
+                  <div className="qr-actions">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={busyKey === "qr-start"}
+                      onClick={startQrPairing}
+                    >
+                      {busyKey === "qr-start" ? "Generating..." : "Generate QR"}
+                    </button>
+                    {qrPairing.active ? (
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={busyKey === "qr-cancel"}
+                        onClick={cancelQrPairing}
+                      >
+                        Cancel
+                      </button>
+                    ) : null}
                     <button
                       className="ghost-button"
                       type="button"
-                      disabled={busyKey === "qr-cancel"}
-                      onClick={cancelQrPairing}
+                      onClick={() => setManualPairingOpen((value) => !value)}
                     >
-                      Cancel
+                      {manualPairingOpen ? "Hide Manual Pairing" : "Manual Pairing"}
                     </button>
-                  ) : null}
+                  </div>
+                  <p className="qr-status">
+                    {qrPairing.message || "Generate a QR code only when you are ready to scan."}
+                  </p>
                 </div>
-                <p className="qr-status">
-                  {qrPairing.message || "Generate a fresh QR code to start pairing."}
-                </p>
+                <div className="qr-card compact-qr-card">
+                  {qrPairing.active && qrPairing.qr_image_data_url ? (
+                    <img className="qr-image" src={qrPairing.qr_image_data_url} alt="Aurynk QR pairing code" />
+                  ) : (
+                    <div className="qr-placeholder">QR appears here</div>
+                  )}
+                </div>
               </div>
-              <div className="qr-card">
-                {qrPairing.active && qrPairing.qr_image_data_url ? (
-                  <img className="qr-image" src={qrPairing.qr_image_data_url} alt="Aurynk QR pairing code" />
-                ) : (
-                  <div className="qr-placeholder">QR code will appear here</div>
-                )}
-              </div>
+
+              {manualPairingOpen ? (
+                <form className="pair-grid compact-pair-grid" onSubmit={handlePair}>
+                  <label>
+                    <span>Address</span>
+                    <input
+                      value={pairForm.address}
+                      onChange={(event) =>
+                        setPairForm((current) => ({ ...current, address: event.target.value }))
+                      }
+                      placeholder="192.168.1.10"
+                    />
+                  </label>
+                  <label>
+                    <span>Pair Port</span>
+                    <input
+                      value={pairForm.pair_port}
+                      onChange={(event) =>
+                        setPairForm((current) => ({ ...current, pair_port: event.target.value }))
+                      }
+                      placeholder="38123"
+                    />
+                  </label>
+                  <label>
+                    <span>Connect Port</span>
+                    <input
+                      value={pairForm.connect_port}
+                      onChange={(event) =>
+                        setPairForm((current) => ({ ...current, connect_port: event.target.value }))
+                      }
+                      placeholder="34891"
+                    />
+                  </label>
+                  <label>
+                    <span>Password</span>
+                    <input
+                      value={pairForm.password}
+                      onChange={(event) =>
+                        setPairForm((current) => ({ ...current, password: event.target.value }))
+                      }
+                      placeholder="123456"
+                    />
+                  </label>
+                  <button className="primary-button pair-submit" type="submit" disabled={busyKey === "pair"}>
+                    {busyKey === "pair" ? "Pairing..." : "Pair and Connect"}
+                  </button>
+                </form>
+              ) : null}
             </div>
-            <form className="pair-grid" onSubmit={handlePair}>
-              <label>
-                <span>Address</span>
-                <input
-                  value={pairForm.address}
-                  onChange={(event) => setPairForm((current) => ({ ...current, address: event.target.value }))}
-                  placeholder="192.168.1.10"
-                />
-              </label>
-              <label>
-                <span>Pair Port</span>
-                <input
-                  value={pairForm.pair_port}
-                  onChange={(event) => setPairForm((current) => ({ ...current, pair_port: event.target.value }))}
-                  placeholder="38123"
-                />
-              </label>
-              <label>
-                <span>Connect Port</span>
-                <input
-                  value={pairForm.connect_port}
-                  onChange={(event) => setPairForm((current) => ({ ...current, connect_port: event.target.value }))}
-                  placeholder="34891"
-                />
-              </label>
-              <label>
-                <span>Password</span>
-                <input
-                  value={pairForm.password}
-                  onChange={(event) => setPairForm((current) => ({ ...current, password: event.target.value }))}
-                  placeholder="123456"
-                />
-              </label>
-              <button className="primary-button" type="submit" disabled={busyKey === "pair"}>
-                {busyKey === "pair" ? "Pairing..." : "Pair and Connect"}
-              </button>
-            </form>
-          </div>
+          ) : null}
 
           <DeviceSection
-            title="Wireless Devices"
+            title="Wireless"
             kicker="Paired"
-            icon={<Smartphone size={18} />}
+            icon={<Smartphone size={16} />}
             devices={groupedDevices.wireless}
             busyKey={busyKey}
             onConnect={(device) => runDeviceAction("connect", device, { address: device.address })}
-            onDisconnect={(device) => runDeviceAction("disconnect", device, { address: device.address })}
+            onDisconnect={(device) =>
+              runDeviceAction("disconnect", device, { address: device.address })
+            }
             onMirror={(device) =>
               runDeviceAction(device.mirroring ? "mirror/stop" : "mirror/start", device)
             }
@@ -342,9 +444,9 @@ function App() {
           />
 
           <DeviceSection
-            title="USB Devices"
+            title="USB"
             kicker="ADB"
-            icon={<Usb size={18} />}
+            icon={<Usb size={16} />}
             devices={groupedDevices.usb}
             busyKey={busyKey}
             onMirror={(device) =>
@@ -353,59 +455,149 @@ function App() {
             onScreenshot={(device) => runDeviceAction("screenshot", device)}
           />
         </section>
+      </main>
 
-        {showSettings ? (
-          <aside className="side-column">
-            <div className="panel sticky-panel">
-              <div className="panel-header">
-                <div>
-                  <p className="panel-kicker">Settings</p>
-                  <h2>Cross-platform defaults</h2>
-                </div>
-              </div>
+      <SettingsDrawer
+        open={settingsDrawerOpen}
+        settings={settings}
+        busyKey={busyKey}
+        showSetupSettings={showSetupSettings}
+        showAdvancedSettings={showAdvancedSettings}
+        onClose={() => setSettingsDrawerOpen(false)}
+        onSave={saveSettings}
+        onToggleSetup={() => setShowSetupSettings((value) => !value)}
+        onToggleAdvanced={() => setShowAdvancedSettings((value) => !value)}
+        onUpdateSetting={updateSetting}
+      />
+    </div>
+  );
+}
 
-              <div className="settings-group">
-                <h3>Application</h3>
-                <label className="toggle-row">
-                  <span>Show notifications</span>
+function SettingsDrawer({
+  open,
+  settings,
+  busyKey,
+  showSetupSettings,
+  showAdvancedSettings,
+  onClose,
+  onSave,
+  onToggleSetup,
+  onToggleAdvanced,
+  onUpdateSetting,
+}) {
+  return (
+    <>
+      <div className={`drawer-backdrop ${open ? "visible" : ""}`} onClick={onClose} />
+      <aside className={`settings-drawer ${open ? "open" : ""}`}>
+        <div className="drawer-header">
+          <div>
+            <p className="panel-kicker">Settings</p>
+            <h2>Only the essentials</h2>
+          </div>
+          <button className="icon-button" type="button" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="drawer-body">
+          <div className="settings-group">
+            <h3>Common</h3>
+            <label className="toggle-row">
+              <span>Show notifications</span>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.app?.show_notifications)}
+                onChange={(event) =>
+                  onUpdateSetting("app", "show_notifications", event.target.checked)
+                }
+              />
+            </label>
+            <label className="toggle-row">
+              <span>Always on top</span>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.scrcpy?.always_on_top)}
+                onChange={(event) =>
+                  onUpdateSetting("scrcpy", "always_on_top", event.target.checked)
+                }
+              />
+            </label>
+            <label className="toggle-row">
+              <span>Enable audio</span>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.scrcpy?.enable_audio)}
+                onChange={(event) =>
+                  onUpdateSetting("scrcpy", "enable_audio", event.target.checked)
+                }
+              />
+            </label>
+          </div>
+
+          <div className="settings-fold">
+            <button className="fold-toggle" type="button" onClick={onToggleSetup}>
+              <span>Initial setup</span>
+              <span>{showSetupSettings ? "Hide" : "Show"}</span>
+            </button>
+            {showSetupSettings ? (
+              <div className="settings-group settings-group-subtle">
+                <label className="field-row">
+                  <span>ADB path</span>
                   <input
-                    type="checkbox"
-                    checked={Boolean(settings.app?.show_notifications)}
-                    onChange={(event) => updateSetting("app", "show_notifications", event.target.checked)}
+                    value={settings.adb?.adb_path ?? ""}
+                    onChange={(event) => onUpdateSetting("adb", "adb_path", event.target.value)}
+                    placeholder="C:\\Android\\platform-tools\\adb.exe or C:\\Android\\platform-tools"
                   />
                 </label>
+                <label className="field-row">
+                  <span>scrcpy path</span>
+                  <input
+                    value={settings.scrcpy?.scrcpy_path ?? ""}
+                    onChange={(event) =>
+                      onUpdateSetting("scrcpy", "scrcpy_path", event.target.value)
+                    }
+                    placeholder="C:\\Tools\\scrcpy\\scrcpy.exe or C:\\Tools\\scrcpy"
+                  />
+                </label>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="settings-fold">
+            <button className="fold-toggle" type="button" onClick={onToggleAdvanced}>
+              <span>Advanced tuning</span>
+              <span>{showAdvancedSettings ? "Hide" : "Show"}</span>
+            </button>
+            {showAdvancedSettings ? (
+              <div className="settings-group settings-group-subtle">
                 <label className="field-row">
                   <span>Theme</span>
                   <select
                     value={settings.app?.theme || "system"}
-                    onChange={(event) => updateSetting("app", "theme", event.target.value)}
+                    onChange={(event) => onUpdateSetting("app", "theme", event.target.value)}
                   >
                     <option value="system">System</option>
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
                 </label>
-              </div>
-
-              <div className="settings-group">
-                <h3>scrcpy</h3>
-                <label className="toggle-row">
-                  <span>Always on top</span>
+                <label className="field-row">
+                  <span>Connection timeout</span>
                   <input
-                    type="checkbox"
-                    checked={Boolean(settings.scrcpy?.always_on_top)}
+                    type="number"
+                    value={settings.adb?.connection_timeout ?? 10}
                     onChange={(event) =>
-                      updateSetting("scrcpy", "always_on_top", event.target.checked)
+                      onUpdateSetting("adb", "connection_timeout", Number(event.target.value))
                     }
                   />
                 </label>
-                <label className="toggle-row">
-                  <span>Enable audio</span>
+                <label className="field-row">
+                  <span>Retry attempts</span>
                   <input
-                    type="checkbox"
-                    checked={Boolean(settings.scrcpy?.enable_audio)}
+                    type="number"
+                    value={settings.adb?.max_retry_attempts ?? 5}
                     onChange={(event) =>
-                      updateSetting("scrcpy", "enable_audio", event.target.checked)
+                      onUpdateSetting("adb", "max_retry_attempts", Number(event.target.value))
                     }
                   />
                 </label>
@@ -415,7 +607,7 @@ function App() {
                     type="number"
                     value={settings.scrcpy?.video_bitrate ?? 8}
                     onChange={(event) =>
-                      updateSetting("scrcpy", "video_bitrate", Number(event.target.value))
+                      onUpdateSetting("scrcpy", "video_bitrate", Number(event.target.value))
                     }
                   />
                 </label>
@@ -425,90 +617,22 @@ function App() {
                     type="number"
                     value={settings.scrcpy?.max_fps ?? 0}
                     onChange={(event) =>
-                      updateSetting("scrcpy", "max_fps", Number(event.target.value))
+                      onUpdateSetting("scrcpy", "max_fps", Number(event.target.value))
                     }
                   />
                 </label>
               </div>
+            ) : null}
+          </div>
+        </div>
 
-              <div className="settings-fold">
-                <button
-                  className="fold-toggle"
-                  type="button"
-                  onClick={() => setShowSetupSettings((value) => !value)}
-                >
-                  <span>Initial setup</span>
-                  <span>{showSetupSettings ? "Hide" : "Show"}</span>
-                </button>
-                {showSetupSettings ? (
-                  <div className="settings-group settings-group-subtle">
-                    <label className="field-row">
-                      <span>ADB path</span>
-                      <input
-                        value={settings.adb?.adb_path ?? ""}
-                        onChange={(event) => updateSetting("adb", "adb_path", event.target.value)}
-                        placeholder="C:\\Android\\platform-tools\\adb.exe or C:\\Android\\platform-tools"
-                      />
-                    </label>
-                    <label className="field-row">
-                      <span>scrcpy path</span>
-                      <input
-                        value={settings.scrcpy?.scrcpy_path ?? ""}
-                        onChange={(event) => updateSetting("scrcpy", "scrcpy_path", event.target.value)}
-                        placeholder="C:\\Tools\\scrcpy\\scrcpy.exe or C:\\Tools\\scrcpy"
-                      />
-                    </label>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="settings-fold">
-                <button
-                  className="fold-toggle"
-                  type="button"
-                  onClick={() => setShowAdvancedSettings((value) => !value)}
-                >
-                  <span>Advanced tuning</span>
-                  <span>{showAdvancedSettings ? "Hide" : "Show"}</span>
-                </button>
-                {showAdvancedSettings ? (
-                  <div className="settings-group settings-group-subtle">
-                    <label className="field-row">
-                      <span>Connection timeout</span>
-                      <input
-                        type="number"
-                        value={settings.adb?.connection_timeout ?? 10}
-                        onChange={(event) =>
-                          updateSetting("adb", "connection_timeout", Number(event.target.value))
-                        }
-                      />
-                    </label>
-                    <label className="field-row">
-                      <span>Retry attempts</span>
-                      <input
-                        type="number"
-                        value={settings.adb?.max_retry_attempts ?? 5}
-                        onChange={(event) =>
-                          updateSetting("adb", "max_retry_attempts", Number(event.target.value))
-                        }
-                      />
-                    </label>
-                  </div>
-                ) : null}
-              </div>
-
-              <button
-                className="primary-button wide"
-                disabled={busyKey === "save-settings"}
-                onClick={saveSettings}
-              >
-                {busyKey === "save-settings" ? "Saving..." : "Save Settings"}
-              </button>
-            </div>
-          </aside>
-        ) : null}
-      </main>
-    </div>
+        <div className="drawer-footer">
+          <button className="primary-button wide" disabled={busyKey === "save-settings"} onClick={onSave}>
+            {busyKey === "save-settings" ? "Saving..." : "Save Settings"}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -524,17 +648,17 @@ function DeviceSection({
   onScreenshot,
 }) {
   return (
-    <div className="panel">
-      <div className="panel-header">
+    <div className="panel compact-panel">
+      <div className="panel-header compact-panel-header">
         <div>
           <p className="panel-kicker">{kicker}</p>
           <h2>{title}</h2>
         </div>
       </div>
 
-      <div className="device-grid">
+      <div className="device-grid compact-device-grid">
         {devices.length === 0 ? (
-          <div className="empty-state">No devices detected.</div>
+          <div className="empty-state slim-empty-state">No devices detected.</div>
         ) : (
           devices.map((device) => {
             const stateText = device.connected ? "Connected" : device.status || "Disconnected";
@@ -544,35 +668,21 @@ function DeviceSection({
             const screenshotKey = `screenshot:${device.id}`;
 
             return (
-              <article className="device-card" key={device.id}>
-                <div className="device-topline">
-                  <div className="device-icon">{icon}</div>
-                  <div>
+              <article className="device-card compact-device-card" key={device.id}>
+                <div className="device-topline compact-device-topline">
+                  <div className="device-icon compact-device-icon">{icon}</div>
+                  <div className="device-meta">
                     <h3>{device.name || device.address || device.adb_serial}</h3>
                     <p>{device.address || device.adb_serial}</p>
                   </div>
                   <span className={`status-pill ${device.connected ? "online" : "idle"}`}>{stateText}</span>
                 </div>
 
-                <div className="device-actions">
-                  {onConnect ? (
-                    <button
-                      className="ghost-button"
-                      disabled={busyKey === actionKey || device.connected}
-                      onClick={() => onConnect(device)}
-                    >
-                      <Link2 size={15} />
+                <div className="device-actions compact-device-actions">
+                  {onConnect && !device.connected ? (
+                    <button className="ghost-button" disabled={busyKey === actionKey} onClick={() => onConnect(device)}>
+                      <Link2 size={14} />
                       Connect
-                    </button>
-                  ) : null}
-                  {onDisconnect ? (
-                    <button
-                      className="ghost-button"
-                      disabled={busyKey === disconnectKey || !device.connected}
-                      onClick={() => onDisconnect(device)}
-                    >
-                      <Link2Off size={15} />
-                      Disconnect
                     </button>
                   ) : null}
                   <button
@@ -580,7 +690,7 @@ function DeviceSection({
                     disabled={busyKey === mirrorKey || (!device.connected && device.type !== "usb")}
                     onClick={() => onMirror(device)}
                   >
-                    <Monitor size={15} />
+                    <Monitor size={14} />
                     {device.mirroring ? "Stop Mirror" : "Mirror"}
                   </button>
                   <button
@@ -588,9 +698,15 @@ function DeviceSection({
                     disabled={busyKey === screenshotKey || !device.connected}
                     onClick={() => onScreenshot(device)}
                   >
-                    <Camera size={15} />
+                    <Camera size={14} />
                     Screenshot
                   </button>
+                  {onDisconnect && device.connected ? (
+                    <button className="ghost-button" disabled={busyKey === disconnectKey} onClick={() => onDisconnect(device)}>
+                      <Link2Off size={14} />
+                      Disconnect
+                    </button>
+                  ) : null}
                 </div>
               </article>
             );
