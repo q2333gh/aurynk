@@ -249,15 +249,15 @@ function App() {
 
       <header className="topbar">
         <div className="topbar-actions">
-          <button className="primary-button" type="button" onClick={togglePairingPanel}>
+          <button className="primary-button topbar-button" type="button" onClick={togglePairingPanel}>
             <Plus size={16} />
-            {pairingPanelOpen ? "Hide" : "Add Device"}
+            {pairingPanelOpen ? "Hide" : "Add"}
           </button>
-          <button className="ghost-button" onClick={loadDevices}>
+          <button className="ghost-button topbar-button" onClick={loadDevices}>
             <RefreshCw size={16} />
             Refresh
           </button>
-          <button className="ghost-button" onClick={() => setSettingsDrawerOpen(true)}>
+          <button className="ghost-button topbar-button" onClick={() => setSettingsDrawerOpen(true)}>
             <Settings size={16} />
             Settings
           </button>
