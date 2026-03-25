@@ -248,9 +248,6 @@ function App() {
       <div className="ambient ambient-b" />
 
       <header className="topbar">
-        <div className="topbar-copy">
-          <h1>Aurynk</h1>
-        </div>
         <div className="topbar-actions">
           <button className="ghost-button" onClick={loadDevices}>
             <RefreshCw size={16} />
