@@ -73,8 +73,8 @@ select {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .topbar-copy {
@@ -90,10 +90,9 @@ select {
 }
 
 .topbar h1 {
-  max-width: 760px;
-  font-size: clamp(1.5rem, 2.8vw, 2.5rem);
-  line-height: 1.03;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.25rem, 2.2vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 .topbar-hint,
@@ -179,17 +178,17 @@ select {
 .hero-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 120px)) minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   align-items: stretch;
 }
 
 .hero-stat {
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(173, 196, 205, 0.08);
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .hero-stat-value {
@@ -198,10 +197,10 @@ select {
 }
 
 .hero-stat-label {
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   color: #a5b4bb;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
 }
 
 .hero-cta {
@@ -218,14 +217,14 @@ select {
 
 .empty-state {
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px;
   border: 1px dashed rgba(173, 196, 205, 0.16);
   color: #9fb2bb;
 }
 
 .compact-empty-state {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -253,10 +252,14 @@ select {
   min-width: 0;
 }
 
+.pairing-copy h3 {
+  font-size: 1rem;
+}
+
 .qr-actions {
   display: flex;
   gap: 8px;
-  margin: 12px 0 10px;
+  margin: 10px 0 8px;
   flex-wrap: wrap;
 }
 
@@ -283,7 +286,7 @@ select {
 .qr-placeholder {
   color: #50616a;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .pair-grid {

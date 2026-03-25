@@ -257,13 +257,7 @@ function App() {
 
       <header className="topbar">
         <div className="topbar-copy">
-          <p className="eyebrow">Aurynk Desktop</p>
-          <h1>Devices first. Everything else on demand.</h1>
-          <p className="topbar-hint">
-            {hasAnyConnectedDevice
-              ? "Mirror, screenshot, or reconnect from one compact view."
-              : "Pair once, then keep the main surface focused on your devices."}
-          </p>
+          <h1>Aurynk</h1>
         </div>
         <div className="topbar-actions">
           <button className="ghost-button" onClick={loadDevices}>
@@ -285,11 +279,11 @@ function App() {
           <div className="hero-strip">
             <div className="hero-stat">
               <span className="hero-stat-value">{devices.length}</span>
-              <span className="hero-stat-label">Devices</span>
+              <span className="hero-stat-label">All</span>
             </div>
             <div className="hero-stat">
               <span className="hero-stat-value">{groupedDevices.wireless.length}</span>
-              <span className="hero-stat-label">Wireless</span>
+              <span className="hero-stat-label">Wi-Fi</span>
             </div>
             <div className="hero-stat">
               <span className="hero-stat-value">{groupedDevices.usb.length}</span>
@@ -304,11 +298,7 @@ function App() {
           {!hasDevices ? (
             <div className="panel onboarding-panel">
               <div className="empty-state compact-empty-state">
-                <p className="panel-kicker">Get Started</p>
-                <h2>No devices yet</h2>
-                <p className="empty-copy">
-                  Pair through QR once. Manual coordinates are there only if you need them.
-                </p>
+                <h2>No devices</h2>
                 {!pairingPanelOpen ? (
                   <button className="primary-button" type="button" onClick={togglePairingPanel}>
                     <Plus size={16} />
@@ -323,8 +313,7 @@ function App() {
             <div className="panel pairing-panel">
               <div className="panel-header compact-panel-header">
                 <div>
-                  <p className="panel-kicker">Pair Device</p>
-                  <h2>Wireless pairing</h2>
+                  <h2>Pair device</h2>
                 </div>
                 {hasDevices ? (
                   <button className="icon-button" type="button" onClick={() => setPairingPanelOpen(false)}>
@@ -335,8 +324,7 @@ function App() {
 
               <div className="pairing-card">
                 <div className="pairing-copy">
-                  <h3>QR pairing</h3>
-                  <p className="pairing-hint">Open Wireless Debugging on Android and scan the code.</p>
+                  <h3>QR</h3>
                   <div className="qr-actions">
                     <button
                       className="primary-button"
@@ -365,14 +353,14 @@ function App() {
                     </button>
                   </div>
                   <p className="qr-status">
-                    {qrPairing.message || "Generate a QR code only when you are ready to scan."}
+                    {qrPairing.message || "Ready"}
                   </p>
                 </div>
                 <div className="qr-card compact-qr-card">
                   {qrPairing.active && qrPairing.qr_image_data_url ? (
                     <img className="qr-image" src={qrPairing.qr_image_data_url} alt="Aurynk QR pairing code" />
                   ) : (
-                    <div className="qr-placeholder">QR appears here</div>
+                    <div className="qr-placeholder">No QR</div>
                   )}
                 </div>
               </div>
@@ -491,8 +479,7 @@ function SettingsDrawer({
       <aside className={`settings-drawer ${open ? "open" : ""}`}>
         <div className="drawer-header">
           <div>
-            <p className="panel-kicker">Settings</p>
-            <h2>Only the essentials</h2>
+            <h2>Settings</h2>
           </div>
           <button className="icon-button" type="button" onClick={onClose}>
             <X size={16} />
@@ -501,7 +488,7 @@ function SettingsDrawer({
 
         <div className="drawer-body">
           <div className="settings-group">
-            <h3>Common</h3>
+            <h3>General</h3>
             <label className="toggle-row">
               <span>Show notifications</span>
               <input
@@ -536,7 +523,7 @@ function SettingsDrawer({
 
           <div className="settings-fold">
             <button className="fold-toggle" type="button" onClick={onToggleSetup}>
-              <span>Initial setup</span>
+              <span>Setup</span>
               <span>{showSetupSettings ? "Hide" : "Show"}</span>
             </button>
             {showSetupSettings ? (
@@ -565,7 +552,7 @@ function SettingsDrawer({
 
           <div className="settings-fold">
             <button className="fold-toggle" type="button" onClick={onToggleAdvanced}>
-              <span>Advanced tuning</span>
+              <span>Advanced</span>
               <span>{showAdvancedSettings ? "Hide" : "Show"}</span>
             </button>
             {showAdvancedSettings ? (
@@ -651,14 +638,13 @@ function DeviceSection({
     <div className="panel compact-panel">
       <div className="panel-header compact-panel-header">
         <div>
-          <p className="panel-kicker">{kicker}</p>
           <h2>{title}</h2>
         </div>
       </div>
 
       <div className="device-grid compact-device-grid">
         {devices.length === 0 ? (
-          <div className="empty-state slim-empty-state">No devices detected.</div>
+          <div className="empty-state slim-empty-state">Empty</div>
         ) : (
           devices.map((device) => {
             const stateText = device.connected ? "Connected" : device.status || "Disconnected";
